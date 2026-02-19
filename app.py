@@ -64,13 +64,17 @@ def getMissionsByDateRange(startDate: str, endDate: str) -> list:
     Returns a list of all mission names launched between startDate and endDate
     (inclusive), sorted chronologically.
     """
-    if not isinstance(startDate, str) and isinstance(endDate, str):
+    if not isinstance(startDate, str) or not isinstance(endDate, str):
         raise TypeError("Input must be string")
 
     df = load_df()
 
-    start = pd.to_datetime(startDate)
-    end = pd.to_datetime(endDate)
+    start = pd.to_datetime(startDate, errors="coerce")
+    end = pd.to_datetime(endDate, errors="coerce")
+
+    if start == pd.NaT or end == pd.NaT:
+        raise ValueError("Invalid date format")
+
 
     dates = pd.to_datetime(df["Date"], errors="coerce")
 
@@ -167,6 +171,9 @@ def getMostUsedRocket() -> str:
         ascending=[False, True]
     )
 
+    if sorted_df.empty:
+        return "NULL"
+
     return sorted_df.iloc[0]["Rocket"]
 
 
@@ -175,7 +182,7 @@ def getAverageMissionsPerYear(startYear: int, endYear: int) -> float:
     Calculates the average number of missions per year over a given range
     (inclusive), rounded to 2 decimal places.
     """
-    if not isinstance(startYear, int) and isinstance(endYear, int):
+    if not isinstance(startYear, int) or not isinstance(endYear, int):
         raise TypeError("Input must be int")
 
     if startYear > endYear:
@@ -203,19 +210,21 @@ def show_avg_missions_per_year():
 
     df = load_df()
     years = pd.to_datetime(df["Date"], errors="coerce").dt.year.dropna().astype(int)
-    min_year, max_year = int(years.min()), int(years.max())
 
-    start_year, end_year = st.slider(
-        "Select year range",
-        min_value=min_year,
-        max_value=max_year,
-        value=(max(min_year, max_year - 10), max_year),
-        step=1,
-    )
+    if not years.empty:
+        min_year, max_year = int(years.min()), int(years.max())
 
-    avg = getAverageMissionsPerYear(start_year, end_year)
+        start_year, end_year = st.slider(
+            "Select year range",
+            min_value=min_year,
+            max_value=max_year,
+            value=(max(min_year, max_year - 10), max_year),
+            step=1,
+        )
 
-    st.metric("Avg missions / year", avg)
+        avg = getAverageMissionsPerYear(start_year, end_year)
+
+        st.metric("Avg missions / year", avg)
 
 def show_main_table(df):
     st.subheader("Space Mission Table Data:")
@@ -278,12 +287,18 @@ def show_filtered_table():
     col1, col2, col3, col4, col5 = st.columns(5)
 
     with col1:
-        start_d, end_d = st.date_input(
+        date_range = st.date_input(
             "Date range",
             value=(min_d, max_d),
             min_value=min_d,
             max_value=max_d,
         )
+        if isinstance(date_range, tuple) and len(date_range) == 2:
+            start_d, end_d = date_range
+        elif isinstance(date_range, tuple) and len(date_range) == 1:
+            start_d = end_d = date_range[0]
+        else:
+            start_d = end_d = date_range
 
     with col2:
         companies = sorted(df["Company"].dropna().unique())
@@ -323,29 +338,42 @@ def show_filtered_table():
     table_slot.dataframe(filtered_df, hide_index=True, height=400, use_container_width=True)
 
 def show_missions_year_by_year():
-    years = list(range(1952, 2022 + 1))
-    counts = [getMissionsByYear(y) for y in years]
+    df = load_df()
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df = df.dropna(subset=["Date"])
 
-    df_plot = pd.DataFrame({
-        "Year": years,
-        "Missions": counts
-    })
+    if not df.empty:
+        years = list(range(
+            df["Date"].dt.year.min(),
+            df["Date"].dt.year.max() + 1
+        ))
 
-    fig = px.bar(
-        df_plot,
-        x="Year",
-        y="Missions",
-        title="Missions Per Year",
-        height=300
-    )
+        counts = [getMissionsByYear(y) for y in years]
 
-    st.plotly_chart(fig, use_container_width=True)
+        df_plot = pd.DataFrame({
+            "Year": years,
+            "Missions": counts
+        })
+
+        fig = px.bar(
+            df_plot,
+            x="Year",
+            y="Missions",
+            title="Missions Per Year",
+            height=300
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 def show_basic_stats():
     l, r, m = st.columns(3)
     df = load_df()
+
     success_count = (df["MissionStatus"] == "Success").sum()
-    success_rate = (success_count / len(df)) * 100
+    if len(df) != 0:
+        success_rate = (success_count / len(df)) * 100
+    else:
+        success_rate = 0
 
     num_failures = (df["MissionStatus"] == "Failure").sum() + (df["MissionStatus"] == "Prelaunch Failure").sum() + (df["MissionStatus"] == "Partial Failure").sum()
     with l:
@@ -356,8 +384,8 @@ def show_basic_stats():
         st.subheader("Total Failures:\n" + str(num_failures))
 
 def run_streamlit_app():
-    st.title("Mission Dashboard")
     st.set_page_config(layout="wide")
+    st.title("Mission Dashboard")
     left_col, space, right_col = st.columns([4, 0.2, 2])
     df = load_df()
 
