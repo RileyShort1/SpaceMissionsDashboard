@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 import os
 
 data_cache: pd.DataFrame | None = None
@@ -173,3 +174,151 @@ def getAverageMissionsPerYear(startYear: int, endYear: int) -> float:
         return 0.0
 
     return round(total_missions / num_years, 2)
+
+# -- streamlit UI functions begin below --
+
+def show_avg_missions_per_year():
+    st.subheader("Average Missions Per Year")
+
+    df = load_df()
+    years = pd.to_datetime(df["Date"], errors="coerce").dt.year.dropna().astype(int)
+    min_year, max_year = int(years.min()), int(years.max())
+
+    start_year, end_year = st.slider(
+        "Select year range",
+        min_value=min_year,
+        max_value=max_year,
+        value=(max(min_year, max_year - 10), max_year),
+        step=1,
+    )
+
+    avg = getAverageMissionsPerYear(start_year, end_year)
+
+    st.metric("Avg missions / year", avg)
+
+def show_main_table(df):
+    st.subheader("Space Mission Table Data:")
+    st.dataframe(df, hide_index=True)
+
+def show_most_used_rocket():
+    df = load_df()
+    st.subheader("Most Used Rocket:\n" + getMostUsedRocket())
+
+def show_top_x_companies(x):
+    data = getTopCompaniesByMissionCount(x)
+
+    df_plot = pd.DataFrame(data, columns=["Company", "Missions"])
+    df_plot = df_plot.sort_values(by="Missions", ascending=False)
+
+    st.subheader("Top Companies by Mission Count")
+    fig = px.bar(
+        df_plot,
+        x="Company",
+        y="Missions",
+        category_orders={"Company": df_plot["Company"].tolist()},
+        height=300
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_mission_status_chart():
+    status_dict = getMissionStatusCount()
+
+    df_plot = pd.DataFrame(
+        list(status_dict.items()),
+        columns=["Status", "Count"]
+    )
+
+    st.subheader("Mission Status Counts")
+
+    fig = px.bar(
+        df_plot,
+        x="Status",
+        y="Count",
+        height=300
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+def show_filtered_table():
+    df = load_df()
+
+    table_slot = st.empty()
+
+    table_slot.dataframe(df, hide_index=True, height=550, use_container_width=True)
+
+    st.markdown("### Filters")
+
+    dates = pd.to_datetime(df["Date"], errors="coerce")
+    valid_dates = dates.dropna()
+    min_d = valid_dates.min().date()
+    max_d = valid_dates.max().date()
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        start_d, end_d = st.date_input(
+            "Date range",
+            value=(min_d, max_d),
+            min_value=min_d,
+            max_value=max_d,
+        )
+
+    with col2:
+        companies = sorted(df["Company"].dropna().unique())
+        selected_companies = st.multiselect("Company", companies, default=[])
+
+    with col3:
+        statuses = ["Success", "Failure", "Partial Failure", "Prelaunch Failure"]
+        selected_statuses = st.multiselect("Mission Status", statuses, default=[])
+
+    with col4:
+        locations = sorted(df["Location"].dropna().unique())
+        selected_locations = st.multiselect("Location", locations, default=[])
+
+    with col5:
+        rockets = sorted(df["Rocket"].dropna().unique())
+        selected_rockets = st.multiselect("Rocket", rockets, default=[])
+
+    mask = dates.notna()
+    mask &= (dates.dt.date >= start_d) & (dates.dt.date <= end_d)
+
+    if selected_companies:
+        mask &= df["Company"].isin(selected_companies)
+
+    if selected_statuses:
+        mask &= df["MissionStatus"].isin(selected_statuses)
+
+    if selected_locations:
+        mask &= df["Location"].isin(selected_locations)
+
+    if selected_rockets:
+        mask &= df["Rocket"].isin(selected_rockets)
+
+    filtered_df = df.loc[mask].copy()
+
+    st.caption(f"{len(filtered_df)} missions shown")
+
+    table_slot.dataframe(filtered_df, hide_index=True, height=550, use_container_width=True)
+
+
+
+def run_streamlit_app():
+    st.title("Mission Dashboard")
+    st.set_page_config(layout="wide")
+    left_col, space, right_col = st.columns([4, 0.2, 2])
+    df = load_df()
+
+    with left_col:
+        show_filtered_table()
+
+    with right_col:
+        show_avg_missions_per_year()
+        show_most_used_rocket()
+        show_top_x_companies(4)
+        show_mission_status_chart()
+
+
+# python -m streamlit run app.py
+if __name__ == "__main__":
+    run_streamlit_app()
