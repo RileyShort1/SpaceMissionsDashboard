@@ -341,7 +341,19 @@ def show_missions_year_by_year():
 
     st.plotly_chart(fig, use_container_width=True)
 
+def show_basic_stats():
+    l, r, m = st.columns(3)
+    df = load_df()
+    success_count = (df["MissionStatus"] == "Success").sum()
+    success_rate = (success_count / len(df)) * 100
 
+    num_failures = (df["MissionStatus"] == "Failure").sum() + (df["MissionStatus"] == "Prelaunch Failure").sum() + (df["MissionStatus"] == "Partial Failure").sum()
+    with l:
+        st.subheader("Total Missions in Dataset:\n" + str(len(df)))
+    with m:
+        st.subheader("Overall Success Rate:\n" + str(round(success_rate, 2)))
+    with r:
+        st.subheader("Total Failures:\n" + str(num_failures))
 
 def run_streamlit_app():
     st.title("Mission Dashboard")
@@ -352,6 +364,7 @@ def run_streamlit_app():
     with left_col:
         show_filtered_table()
         show_missions_year_by_year()
+        show_basic_stats()
 
     with right_col:
         show_avg_missions_per_year()
