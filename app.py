@@ -25,6 +25,9 @@ def getMissionCountByCompany(companyName: str) -> int:
     """
     Returns the total number of missions for a given company.
     """
+    if not isinstance(companyName, str):
+        raise TypeError("Input must be string")
+
     df = load_df()
 
     # assumes each line of csv file represents a mission
@@ -38,6 +41,9 @@ def getSuccessRate(companyName: str) -> float:
     rounded to 2 decimal places. Only "Success" counts as successful.
     Return 0.0 if company has no missions.
     """
+    if not isinstance(companyName, str):
+        raise TypeError("Input must be string")
+
     df = load_df()
 
     total_missions = getMissionCountByCompany(companyName)
@@ -58,6 +64,9 @@ def getMissionsByDateRange(startDate: str, endDate: str) -> list:
     Returns a list of all mission names launched between startDate and endDate
     (inclusive), sorted chronologically.
     """
+    if not isinstance(startDate, str) and isinstance(endDate, str):
+        raise TypeError("Input must be string")
+
     df = load_df()
 
     start = pd.to_datetime(startDate)
@@ -86,6 +95,9 @@ def getTopCompaniesByMissionCount(n: int) -> list:
     Output format: [(companyName, missionCount), ...]
     Sorted by mission count descending; ties broken alphabetically by company name.
     """
+    if not isinstance(n, int):
+        raise TypeError("Input must be int")
+
     df = load_df()
 
     grouped = (
@@ -127,6 +139,9 @@ def getMissionsByYear(year: int) -> int:
     """
     Returns the total number of missions launched in a specific year.
     """
+    if not isinstance(year, int):
+        raise TypeError("Input must be int")
+
     df = load_df()
 
     dates = pd.to_datetime(df["Date"], errors="coerce")
@@ -160,6 +175,12 @@ def getAverageMissionsPerYear(startYear: int, endYear: int) -> float:
     Calculates the average number of missions per year over a given range
     (inclusive), rounded to 2 decimal places.
     """
+    if not isinstance(startYear, int) and isinstance(endYear, int):
+        raise TypeError("Input must be int")
+
+    if startYear > endYear:
+        raise ValueError("startYear must be <= endYear")
+
     df = load_df()
 
     dates = pd.to_datetime(df["Date"], errors="coerce")
