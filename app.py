@@ -101,7 +101,8 @@ def getTopCompaniesByMissionCount(n: int) -> list:
     """
     if not isinstance(n, int):
         raise TypeError("Input must be int")
-
+    if n < 0:
+        raise ValueError("Input should be >= 0")
     df = load_df()
 
     grouped = (

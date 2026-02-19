@@ -3,6 +3,7 @@ import pytest
 
 def testGetMissionCountByCompany():
     assert getMissionCountByCompany("NASA") == 203
+    assert getMissionCountByCompany("DoesNotExist") == 0
 
 def testGetSuccessRate():
     assert getSuccessRate("NASA") == 91.63
@@ -13,6 +14,9 @@ def testGetMissionsByDateRange():
 
 def testGetTopCompaniesByMissionCount():
     assert getTopCompaniesByMissionCount(3) == [("RVSN USSR", 1777), ("CASC", 338), ("Arianespace", 293)]
+    assert getTopCompaniesByMissionCount(0) == []
+    with pytest.raises(ValueError):
+        getTopCompaniesByMissionCount(-1)
 
 def testGetMissionStatusCount():
     assert getMissionStatusCount() == {"Success": 4162, "Failure": 357, "Partial Failure": 107, "Prelaunch Failure": 4}
