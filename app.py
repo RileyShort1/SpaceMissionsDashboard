@@ -237,7 +237,7 @@ def show_top_x_companies(x):
         x="Company",
         y="Missions",
         category_orders={"Company": df_plot["Company"].tolist()},
-        height=300
+        height=250
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -266,7 +266,7 @@ def show_filtered_table():
 
     table_slot = st.empty()
 
-    table_slot.dataframe(df, hide_index=True, height=550, use_container_width=True)
+    table_slot.dataframe(df, hide_index=True, height=400, use_container_width=True)
 
     st.markdown("### Filters")
 
@@ -320,7 +320,26 @@ def show_filtered_table():
 
     st.caption(f"{len(filtered_df)} missions shown")
 
-    table_slot.dataframe(filtered_df, hide_index=True, height=550, use_container_width=True)
+    table_slot.dataframe(filtered_df, hide_index=True, height=400, use_container_width=True)
+
+def show_missions_year_by_year():
+    years = list(range(1952, 2022 + 1))
+    counts = [getMissionsByYear(y) for y in years]
+
+    df_plot = pd.DataFrame({
+        "Year": years,
+        "Missions": counts
+    })
+
+    fig = px.bar(
+        df_plot,
+        x="Year",
+        y="Missions",
+        title="Missions Per Year",
+        height=300
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
@@ -332,6 +351,7 @@ def run_streamlit_app():
 
     with left_col:
         show_filtered_table()
+        show_missions_year_by_year()
 
     with right_col:
         show_avg_missions_per_year()
