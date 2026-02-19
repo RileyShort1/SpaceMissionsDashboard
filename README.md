@@ -4,7 +4,7 @@ An interactive dashboard to visualize and analyze historical space mission data 
 ## Tech Stack
 Python + Streamlit  
 I picked this tech stack because both Python and Streamlit are simple to use and therefore fast  
-to prototype with.  
+to prototype with. Python also has great libraries for csv file parsing.    
 
 ## Running the App  
 To run the app, make sure you have streamlit, pandas, pytest, and plotly installed.    
@@ -25,7 +25,9 @@ to see how missions decreased after the space race.
 
 I also included charts for the top companies by mission count and mission status counts    
 (ie. how many failures were there overall) as well as the most used rocket.  
+At the bottom of the page, there are also some basic statistics like total missions  
+and total success rate.      
 
 ## Note on Testing  
-The tests in the instruction document did not seem to match with the data in the csv file    
-(in csv NASA has 203 missions, but doc example says 394)     
+The test examples in the instruction document did not seem to match with the data in the csv file    
+(in csv file NASA has 203 missions, but the instruction doc example says 394)       
