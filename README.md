@@ -1,5 +1,5 @@
 # SpaceMissionsDashboard
-An interactive dashboard to visualize and analyze historical space mission data from 1957 onwards.
+An interactive dashboard to visualize and analyze historical space mission data from 1957 to 2022.
 
 ## Tech Stack
 Python + Streamlit  
