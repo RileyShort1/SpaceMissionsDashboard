@@ -74,7 +74,8 @@ def getMissionsByDateRange(startDate: str, endDate: str) -> list:
 
     if start == pd.NaT or end == pd.NaT:
         raise ValueError("Invalid date format")
-
+    if start > end:
+        raise ValueError("Invalid date range")
 
     dates = pd.to_datetime(df["Date"], errors="coerce")
 
@@ -282,61 +283,62 @@ def show_filtered_table():
 
     dates = pd.to_datetime(df["Date"], errors="coerce")
     valid_dates = dates.dropna()
-    min_d = valid_dates.min().date()
-    max_d = valid_dates.max().date()
+    if not valid_dates.empty:
+        min_d = valid_dates.min().date()
+        max_d = valid_dates.max().date()
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4, col5 = st.columns(5)
 
-    with col1:
-        date_range = st.date_input(
-            "Date range",
-            value=(min_d, max_d),
-            min_value=min_d,
-            max_value=max_d,
-        )
-        if isinstance(date_range, tuple) and len(date_range) == 2:
-            start_d, end_d = date_range
-        elif isinstance(date_range, tuple) and len(date_range) == 1:
-            start_d = end_d = date_range[0]
-        else:
-            start_d = end_d = date_range
+        with col1:
+            date_range = st.date_input(
+                "Date range",
+                value=(min_d, max_d),
+                min_value=min_d,
+                max_value=max_d,
+            )
+            if isinstance(date_range, tuple) and len(date_range) == 2:
+                start_d, end_d = date_range
+            elif isinstance(date_range, tuple) and len(date_range) == 1:
+                start_d = end_d = date_range[0]
+            else:
+                start_d = end_d = date_range
 
-    with col2:
-        companies = sorted(df["Company"].dropna().unique())
-        selected_companies = st.multiselect("Company", companies, default=[])
+        with col2:
+            companies = sorted(df["Company"].dropna().unique())
+            selected_companies = st.multiselect("Company", companies, default=[])
 
-    with col3:
-        statuses = ["Success", "Failure", "Partial Failure", "Prelaunch Failure"]
-        selected_statuses = st.multiselect("Mission Status", statuses, default=[])
+        with col3:
+            statuses = ["Success", "Failure", "Partial Failure", "Prelaunch Failure"]
+            selected_statuses = st.multiselect("Mission Status", statuses, default=[])
 
-    with col4:
-        locations = sorted(df["Location"].dropna().unique())
-        selected_locations = st.multiselect("Location", locations, default=[])
+        with col4:
+            locations = sorted(df["Location"].dropna().unique())
+            selected_locations = st.multiselect("Location", locations, default=[])
 
-    with col5:
-        rockets = sorted(df["Rocket"].dropna().unique())
-        selected_rockets = st.multiselect("Rocket", rockets, default=[])
+        with col5:
+            rockets = sorted(df["Rocket"].dropna().unique())
+            selected_rockets = st.multiselect("Rocket", rockets, default=[])
 
-    mask = dates.notna()
-    mask &= (dates.dt.date >= start_d) & (dates.dt.date <= end_d)
+        mask = dates.notna()
+        mask &= (dates.dt.date >= start_d) & (dates.dt.date <= end_d)
 
-    if selected_companies:
-        mask &= df["Company"].isin(selected_companies)
+        if selected_companies:
+            mask &= df["Company"].isin(selected_companies)
 
-    if selected_statuses:
-        mask &= df["MissionStatus"].isin(selected_statuses)
+        if selected_statuses:
+            mask &= df["MissionStatus"].isin(selected_statuses)
 
-    if selected_locations:
-        mask &= df["Location"].isin(selected_locations)
+        if selected_locations:
+            mask &= df["Location"].isin(selected_locations)
 
-    if selected_rockets:
-        mask &= df["Rocket"].isin(selected_rockets)
+        if selected_rockets:
+            mask &= df["Rocket"].isin(selected_rockets)
 
-    filtered_df = df.loc[mask].copy()
+        filtered_df = df.loc[mask].copy()
 
-    st.caption(f"{len(filtered_df)} missions shown")
+        st.caption(f"{len(filtered_df)} missions shown")
 
-    table_slot.dataframe(filtered_df, hide_index=True, height=400, use_container_width=True)
+        table_slot.dataframe(filtered_df, hide_index=True, height=400, use_container_width=True)
 
 def show_missions_year_by_year():
     df = load_df()

@@ -11,6 +11,8 @@ def testGetSuccessRate():
 
 def testGetMissionsByDateRange():
     assert getMissionsByDateRange("1957-10-01", "1957-12-31") == ["Sputnik-1", "Sputnik-2", "Vanguard TV3"]
+    with pytest.raises(ValueError):
+        getMissionsByDateRange("1957-12-31", "1957-10-01")
 
 def testGetTopCompaniesByMissionCount():
     assert getTopCompaniesByMissionCount(3) == [("RVSN USSR", 1777), ("CASC", 338), ("Arianespace", 293)]
